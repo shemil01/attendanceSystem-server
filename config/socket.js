@@ -3,7 +3,7 @@ const { Server } = require("socket.io");
 function initSocket(server) {
   const io = new Server(server, {
     cors: {
-      origin: process.env.FRONTEND_URL || "http://localhost:3000",
+      origin: process.env.FRONTEND_URL || "https://attendance-system-client-dun.vercel.app",
       methods: ["GET", "POST"],
       credentials: true,
     },
