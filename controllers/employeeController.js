@@ -5,11 +5,7 @@ const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const { validateEmployeeCreate } = require('../validators/employeeValidator');
 
-/**
- * @desc    Get all employees
- * @route   GET /api/employees
- * @access  Private (Admin)
- */
+// get all employes
 exports.getAllEmployees = catchAsync(async (req, res) => {
   const { role, isActive, page = 1, limit = 10 } = req.query;
 
@@ -46,11 +42,8 @@ exports.getAllEmployees = catchAsync(async (req, res) => {
   });
 });
 
-/**
- * @desc    Create new employee
- * @route   POST /api/employees
- * @access  Private (Admin)
- */
+
+//  create a employee
 exports.createEmployee = catchAsync(async (req, res, next) => {
   // Validate request body
   const { error } = validateEmployeeCreate(req.body);
@@ -86,31 +79,64 @@ exports.createEmployee = catchAsync(async (req, res, next) => {
   });
 });
 
-/**
- * @desc    Get employee by ID
- * @route   GET /api/employees/:id
- * @access  Private (Admin)
- */
+// Get employee by ID
+
 exports.getEmployee = catchAsync(async (req, res, next) => {
-  const employee = await User.findById(req.params.id).select('-password');
-  
+  const employee = await User.findById(req.params.id).select("-password");
+
   if (!employee) {
-    return next(new AppError('No employee found with that ID', 404));
+    return next(new AppError("No employee found with that ID", 404));
   }
 
+  // Today’s date range
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  // Fetch today's attendance
+  const todayAttendance = await Attendance.findOne({
+    employee: employee._id,
+    date: { $gte: today, $lt: tomorrow },
+  });
+
+  // Fetch last 7 days history
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 7);
+
+  const history = await Attendance.find({
+    employee: employee._id,
+    date: { $gte: startDate, $lt: tomorrow },
+  }).sort({ date: -1 });
+
+  // Calculate stats
+  const presentDays = history.filter(
+    (record) => record.status === "PRESENT" || (record.checkIn && record.checkOut)
+  ).length;
+
+  const stats = {
+    totalDays: history.length,
+    presentDays,
+    attendanceRate:
+      history.length > 0
+        ? Math.round((presentDays / history.length) * 100)
+        : 0,
+  };
+
   res.status(200).json({
-    status: 'success',
+    status: "success",
     data: {
-      employee
-    }
+      employee,
+      todayAttendance,
+      history,
+      stats,
+    },
   });
 });
 
-/**
- * @desc    Update employee
- * @route   PATCH /api/employees/:id
- * @access  Private (Admin)
- */
+
+// Update employee
 exports.updateEmployee = catchAsync(async (req, res, next) => {
   // Remove password from update fields if present
   if (req.body.password) {
@@ -138,11 +164,7 @@ exports.updateEmployee = catchAsync(async (req, res, next) => {
   });
 });
 
-/**
- * @desc    Delete employee (soft delete)
- * @route   DELETE /api/employees/:id
- * @access  Private (Admin)
- */
+//  Delete employee 
 exports.deleteEmployee = catchAsync(async (req, res, next) => {
   const employee = await User.findByIdAndDelete(
     req.params.id,
@@ -160,11 +182,7 @@ exports.deleteEmployee = catchAsync(async (req, res, next) => {
   });
 });
 
-/**
- * @desc    Get employee dashboard stats
- * @route   GET /api/employees/:id/stats
- * @access  Private (Admin)
- */
+//   Get employee dashboard stats
 exports.getEmployeeStats = catchAsync(async (req, res, next) => {
   const employeeId = req.params.id;
   const currentDate = new Date();

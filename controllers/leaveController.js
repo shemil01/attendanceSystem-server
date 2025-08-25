@@ -137,6 +137,99 @@ exports.getAllLeaves = catchAsync(async (req, res, next) => {
   });
 });
 
+//  ...get todayss leaves
+exports.getTodayLeaves = catchAsync(async (req, res, next) => {
+  const { page = 1, limit = 10, department } = req.query;
+
+  // Today's date range
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(todayStart);
+  todayEnd.setDate(todayEnd.getDate() + 1);
+
+  // Base filter for approved leaves overlapping today
+  const filter = {
+    status: 'APPROVED',
+    startDate: { $lt: todayEnd },
+    endDate: { $gte: todayStart },
+  };
+
+  // Department filter
+  if (department) {
+    const employees = await User.find(
+      { department: new RegExp(department, 'i') },
+      '_id'
+    );
+    filter.employee = { $in: employees.map(emp => emp._id) };
+  }
+
+  // Query leaves with pagination
+  const leaves = await Leave.find(filter)
+    .populate({
+      path: 'employee',
+      select: 'name email department position',
+      match: department ? { department: new RegExp(department, 'i') } : {},
+    })
+    .populate('approvedBy', 'name')
+    .sort({ startDate: 1 })
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit));
+
+  // Remove null employees if department filter applied
+  const filteredLeaves = department
+    ? leaves.filter(l => l.employee !== null)
+    : leaves;
+
+  // Total leaves count
+  const total = await Leave.countDocuments(filter);
+
+  // Today's stats by department
+  const todayStats = await Leave.aggregate([
+    { $match: filter },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'employee',
+        foreignField: '_id',
+        as: 'employeeData',
+      },
+    },
+    { $unwind: '$employeeData' },
+    {
+      $group: {
+        _id: '$employeeData.department',
+        count: { $sum: 1 },
+        employees: { $addToSet: '$employee' },
+      },
+    },
+    {
+      $project: {
+        department: '$_id',
+        count: 1,
+        employeeCount: { $size: '$employees' },
+        _id: 0,
+      },
+    },
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    results: filteredLeaves.length,
+    data: {
+      leaves: filteredLeaves,
+      stats: {
+        totalLeaves: total,
+        departmentBreakdown: todayStats,
+      },
+    },
+    pagination: {
+      current: parseInt(page),
+      pages: Math.ceil(total / limit),
+      total,
+    },
+  });
+});
+
 // Update leave status (Admin only)
 exports.updateLeaveStatus = catchAsync(async (req, res, next) => {
   const { status } = req.body;
@@ -215,11 +308,7 @@ exports.updateLeaveStatus = catchAsync(async (req, res, next) => {
   });
 });
 
-/**
- * @desc    Get leave statistics
- * @route   GET /api/leaves/stats
- * @access  Private
- */
+
 exports.getLeaveStats = catchAsync(async (req, res, next) => {
   const employeeId = req.user.id;
   const currentYear = new Date().getFullYear();
@@ -260,7 +349,7 @@ exports.getLeaveStats = catchAsync(async (req, res, next) => {
   };
 
   stats.forEach((stat) => {
-    result[stat._id] = { count: stat.count, totalDays: stat.totalDays + 1 }; // +1 to include start day
+    result[stat._id] = { count: stat.count, totalDays: stat.totalDays + 1 };
   });
 
   res.status(200).json({

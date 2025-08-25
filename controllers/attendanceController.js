@@ -1,5 +1,4 @@
 const Attendance = require("../models/Attendance");
-const User = require("../models/User");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const {
@@ -7,7 +6,7 @@ const {
   validateBreak,
 } = require("../validators/attendanceValidator");
 
-
+// chekin controller
 exports.checkIn = catchAsync(async (req, res, next) => {
   // Validate request body
   const { error } = validateCheckIn(req.body);
@@ -50,11 +49,7 @@ exports.checkIn = catchAsync(async (req, res, next) => {
   });
 });
 
-/**
- * @desc    Check out from work
- * @route   POST /api/attendance/check-out
- * @access  Private (Employee)
- */
+//  Check out from work
 exports.checkOut = catchAsync(async (req, res, next) => {
   const employeeId = req.user.id;
   const today = new Date();
@@ -103,11 +98,7 @@ exports.checkOut = catchAsync(async (req, res, next) => {
   });
 });
 
-/**
- * @desc    Start a break
- * @route   POST /api/attendance/break/start
- * @access  Private (Employee)
- */
+//  Start a break
 exports.startBreak = catchAsync(async (req, res, next) => {
   // Validate request body
   const { error } = validateBreak(req.body);
@@ -159,11 +150,7 @@ exports.startBreak = catchAsync(async (req, res, next) => {
   });
 });
 
-/**
- * @desc    End a break
- * @route   POST /api/attendance/break/end
- * @access  Private (Employee)
- */
+// End a break
 exports.endBreak = catchAsync(async (req, res, next) => {
   const employeeId = req.user.id;
   const today = new Date();
@@ -213,15 +200,11 @@ exports.endBreak = catchAsync(async (req, res, next) => {
   });
 });
 
-/**
- * @desc    Get today's attendance record
- * @route   GET /api/attendance/today
- * @access  Private (Employee)
- */
-exports.getTodayAttendance = catchAsync(async (req, res, next) => {
+//  Get today's attendance record
+exports.getTodayAttendance = catchAsync(async (req, res) => {
   const employeeId = req.user.id;
   const today = new Date();
-  today.setHours(0, 0, 0, 0); 
+  today.setHours(0, 0, 0, 0);
 
   const attendance = await Attendance.findOne({
     employee: employeeId,
@@ -239,12 +222,8 @@ exports.getTodayAttendance = catchAsync(async (req, res, next) => {
   });
 });
 
-/**
- * @desc    Get attendance history
- * @route   GET /api/attendance/history
- * @access  Private (Employee)
- */
-exports.getAttendanceHistory = catchAsync(async (req, res, next) => {
+// Get own attendance history
+exports.getAttendanceHistory = catchAsync(async (req, res) => {
   const employeeId = req.user.id;
   const { startDate, endDate, page = 1, limit = 10 } = req.query;
 
@@ -282,43 +261,56 @@ exports.getAttendanceHistory = catchAsync(async (req, res, next) => {
   });
 });
 
-/**
- * @desc    Get all employees attendance (Admin only)
- * @route   GET /api/attendance/employees
- * @access  Private (Admin)
- */
-exports.getAllEmployeesAttendance = catchAsync(async (req, res, next) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+// Get all employees attendance (Admin only)
+exports.getAllEmployeesAttendance = catchAsync(async (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
 
-  const { date = today, page = 1, limit = 10 } = req.query;
+  const attendance = await Attendance.find()
+    .populate("employee", "name email role")
+    .sort({ checkIn: 1 })
+    .limit(parseInt(limit));;
+
+  const total = await Attendance.countDocuments();
+
+  res.status(200).json({
+    status: "success",
+    results: attendance.length,
+    data: { attendance },
+    pagination: {
+      current: parseInt(page),
+      pages: Math.ceil(total / limit),
+      total,
+    },
+  });
+});
+// Get a employees attandance
+exports.getEmployeeAttendance = catchAsync(async (req, res) => {
+  const { id: employeeId } = req.params;
+  const { date = new Date(), page = 1, limit = 10 } = req.query;
+
+  // Filter by date
   const filterDate = new Date(date);
   filterDate.setHours(0, 0, 0, 0);
+  const nextDay = new Date(filterDate.getTime() + 24 * 60 * 60 * 1000);
 
-  // Build filter
   const filter = {
-    date: {
-      $gte: filterDate,
-      $lt: new Date(filterDate.getTime() + 24 * 60 * 60 * 1000),
-    },
+    employee: employeeId,
+    date: { $gte: filterDate, $lt: nextDay },
   };
 
-  // Execute query with pagination
+  // Fetch attendance with pagination
   const attendance = await Attendance.find(filter)
     .populate("employee", "name email role")
     .sort({ checkIn: 1 })
-    .limit(limit * 1)
-    .skip((page - 1) * limit);
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit));
 
-  // Get total count for pagination
   const total = await Attendance.countDocuments(filter);
 
   res.status(200).json({
     status: "success",
     results: attendance.length,
-    data: {
-      attendance,
-    },
+    data: { attendance },
     pagination: {
       current: parseInt(page),
       pages: Math.ceil(total / limit),
