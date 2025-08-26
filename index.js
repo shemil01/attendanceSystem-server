@@ -40,8 +40,7 @@ app.use("/api", LeaveRoute);
 app.use("/api", EmployeesRoute);
 
 // Initialize Socket.IO and attach to app
-const io = initSocket(server);
-app.set("io", io);
+initSocket(server);
 
 // Start server
 server.listen(port, () => {
