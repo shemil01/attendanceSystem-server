@@ -291,7 +291,7 @@ exports.updateLeaveStatus = catchAsync(async (req, res, next) => {
 
   // Emit notification to employee room
   const io = getIO();
-  io.to(leave.employee._id.toString()).emit("new-notification", notification);
+io.to(leave.employee._id.toString()).emit("new-notification", notification);
   
   res.status(200).json({
     status: "success",
