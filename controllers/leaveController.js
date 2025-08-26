@@ -287,17 +287,14 @@ exports.updateLeaveStatus = catchAsync(async (req, res, next) => {
   });
 
   // Emit real-time notification via Socket.io
-  if (io) {
-    io.to(`user-${leave.employee._id}`).emit("new-notification", {
-      ...notification.toObject(),
-      employee: {
-        name: leave.employee.name,
-        email: leave.employee.email,
-      },
-    });
+  io.to(`user-${leave.employee._id}`).emit("new-notification", {
+    ...notification.toObject(),
+    employee: {
+      name: leave.employee.name,
+      email: leave.employee.email,
+    },
+  });
 
-    console.log(`Notification sent to user ${leave.employee._id}`);
-  }
   await leave.populate("employee", "name email");
   await leave.populate("approvedBy", "name");
 
@@ -307,6 +304,7 @@ exports.updateLeaveStatus = catchAsync(async (req, res, next) => {
     status: "success",
     data: {
       leave,
+      notification,
     },
   });
 });
