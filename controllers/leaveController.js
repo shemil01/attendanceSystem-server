@@ -4,7 +4,6 @@ const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const { validateLeaveRequest } = require("../validators/leaveValidator");
 const Notification = require("../models/Notification");
-const { getIO } = require("../config/socket");
 
 // .....leave appliacation controller
 exports.applyForLeave = catchAsync(async (req, res, next) => {
@@ -289,10 +288,6 @@ exports.updateLeaveStatus = catchAsync(async (req, res, next) => {
   await leave.populate("employee", "name email");
   await leave.populate("approvedBy", "name");
 
-  // Emit notification to employee room
-  const io = getIO();
-io.to(leave.employee._id.toString()).emit("new-notification", notification);
-  
   res.status(200).json({
     status: "success",
     data: {

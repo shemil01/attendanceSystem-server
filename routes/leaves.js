@@ -58,7 +58,7 @@ router.post(
 //  Get my leaves
 router.get(
   "/leaves/my-leaves",
-  restrictTo("EMPLOYEE"),
+  restrictTo("EMPLOYEE","ADMIN"),
   [
     query("status")
       .optional()

@@ -2,9 +2,7 @@ const express = require("express");
 require("dotenv").config({ path: ".env" });
 const cors = require("cors");
 const helmet = require("helmet");
-const http = require("http");
 const connectDB = require("./config/DbConnection");
-const { initSocket } = require("./config/socket");
 
 // Routes
 const authRoute = require("./routes/auth");
@@ -13,7 +11,6 @@ const LeaveRoute = require("./routes/leaves");
 const EmployeesRoute = require("./routes/employees");
 
 const app = express();
-const server = http.createServer(app);
 
 // Security middleware
 app.use(helmet());
@@ -26,7 +23,7 @@ const port = process.env.PORT || 4000;
 // CORS middleware
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "https://attendance-system-client-dun.vercel.app",
+    origin: process.env.FRONTEND_URL ,
     credentials: true,
   })
 );
@@ -39,10 +36,8 @@ app.use("/api", attendanceRoute);
 app.use("/api", LeaveRoute);
 app.use("/api", EmployeesRoute);
 
-// Initialize Socket.IO and attach to app
-initSocket(server);
 
 // Start server
-server.listen(port, () => {
+app.listen(port, () => {
   console.log(`🚀 Server running on http://localhost:${port}`);
 });

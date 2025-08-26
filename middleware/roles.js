@@ -1,6 +1,7 @@
 const AppError = require("../utils/appError");
 
 const restrictTo = (...allowedRoles) => {
+  console.log(allowedRoles)
   // Return the actual middleware function that will be called for each request
   return (req, res, next) => {
     if (!req.user || !req.user.role) {
