@@ -149,7 +149,7 @@ exports.getTodayLeaves = catchAsync(async (req, res, next) => {
 
   // Base filter for approved leaves overlapping today
   const filter = {
-    status: 'APPROVED',
+    status: "APPROVED",
     startDate: { $lt: todayEnd },
     endDate: { $gte: todayStart },
   };
@@ -157,27 +157,27 @@ exports.getTodayLeaves = catchAsync(async (req, res, next) => {
   // Department filter
   if (department) {
     const employees = await User.find(
-      { department: new RegExp(department, 'i') },
-      '_id'
+      { department: new RegExp(department, "i") },
+      "_id"
     );
-    filter.employee = { $in: employees.map(emp => emp._id) };
+    filter.employee = { $in: employees.map((emp) => emp._id) };
   }
 
   // Query leaves with pagination
   const leaves = await Leave.find(filter)
     .populate({
-      path: 'employee',
-      select: 'name email department position',
-      match: department ? { department: new RegExp(department, 'i') } : {},
+      path: "employee",
+      select: "name email department position",
+      match: department ? { department: new RegExp(department, "i") } : {},
     })
-    .populate('approvedBy', 'name')
+    .populate("approvedBy", "name")
     .sort({ startDate: 1 })
     .skip((page - 1) * limit)
     .limit(parseInt(limit));
 
   // Remove null employees if department filter applied
   const filteredLeaves = department
-    ? leaves.filter(l => l.employee !== null)
+    ? leaves.filter((l) => l.employee !== null)
     : leaves;
 
   // Total leaves count
@@ -188,32 +188,32 @@ exports.getTodayLeaves = catchAsync(async (req, res, next) => {
     { $match: filter },
     {
       $lookup: {
-        from: 'users',
-        localField: 'employee',
-        foreignField: '_id',
-        as: 'employeeData',
+        from: "users",
+        localField: "employee",
+        foreignField: "_id",
+        as: "employeeData",
       },
     },
-    { $unwind: '$employeeData' },
+    { $unwind: "$employeeData" },
     {
       $group: {
-        _id: '$employeeData.department',
+        _id: "$employeeData.department",
         count: { $sum: 1 },
-        employees: { $addToSet: '$employee' },
+        employees: { $addToSet: "$employee" },
       },
     },
     {
       $project: {
-        department: '$_id',
+        department: "$_id",
         count: 1,
-        employeeCount: { $size: '$employees' },
+        employeeCount: { $size: "$employees" },
         _id: 0,
       },
     },
   ]);
 
   res.status(200).json({
-    status: 'success',
+    status: "success",
     results: filteredLeaves.length,
     data: {
       leaves: filteredLeaves,
@@ -240,7 +240,10 @@ exports.updateLeaveStatus = catchAsync(async (req, res, next) => {
     return next(new AppError("Status can only be APPROVED or REJECTED", 400));
   }
 
-  const leave = await Leave.findById(req.params.id);
+  const leave = await Leave.findById(req.params.id).populate(
+    "employee",
+    "name email"
+  );
 
   if (!leave) {
     return next(new AppError("No leave found with that ID", 404));
@@ -253,6 +256,7 @@ exports.updateLeaveStatus = catchAsync(async (req, res, next) => {
   leave.status = status;
   leave.approvedBy = adminId;
   await leave.save();
+
   // Create notification in database
   const notificationMessage =
     status === "APPROVED"
@@ -286,7 +290,6 @@ exports.updateLeaveStatus = catchAsync(async (req, res, next) => {
   if (io) {
     io.to(`user-${leave.employee._id}`).emit("new-notification", {
       ...notification.toObject(),
-      // Populate employee data for immediate frontend use
       employee: {
         name: leave.employee.name,
         email: leave.employee.email,
@@ -307,7 +310,6 @@ exports.updateLeaveStatus = catchAsync(async (req, res, next) => {
     },
   });
 });
-
 
 exports.getLeaveStats = catchAsync(async (req, res, next) => {
   const employeeId = req.user.id;

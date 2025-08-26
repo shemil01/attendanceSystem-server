@@ -3,7 +3,6 @@ const { body, query } = require("express-validator");
 const leaveController = require("../controllers/leaveController");
 const auth = require("../middleware/auth");
 const restrictTo = require("../middleware/roles");
-// const validate = require('../middleware/validation');
 
 const router = express.Router();
 
@@ -53,15 +52,10 @@ router.post(
       .isURL()
       .withMessage("Document must be a valid URL"),
   ],
-  //   validate,
   leaveController.applyForLeave
 );
 
-/**
- * @route   GET /api/leaves/my-leaves
- * @desc    Get my leaves
- * @access  Private (Employee)
- */
+//  Get my leaves
 router.get(
   "/leaves/my-leaves",
   restrictTo("EMPLOYEE"),
@@ -83,7 +77,6 @@ router.get(
       .isInt({ min: 2000, max: 2100 })
       .withMessage("Year must be a valid year"),
   ],
-  //   validate,
   leaveController.getMyLeaves
 );
 
@@ -123,7 +116,6 @@ router.get(
       .isLength({ max: 50 })
       .withMessage("Department cannot exceed 50 characters"),
   ],
-  //   validate,
   leaveController.getAllLeaves
 );
 
@@ -168,28 +160,9 @@ router.get(
   leaveController.getLeaveStats
 );
 
-/**
- * @route   GET /api/leaves/:id
- * @desc    Get specific leave request
- * @access  Private
- */
-// router.get(
-//   '/:id',
-//   [
-//     query('include')
-//       .optional()
-//       .isIn(['employee', 'approvedBy', 'all'])
-//       .withMessage('Include must be one of: employee, approvedBy, all')
-//   ],
-// //   validate,
-//   leaveController.getLeave
-// );
 
-/**
- * @route   PATCH /api/leaves/:id
- * @desc    Update leave status (Admin only)
- * @access  Private (Admin)
- */
+
+// Update leave status
 router.patch(
   "/leaves/:id",
   restrictTo("ADMIN"),
@@ -203,7 +176,6 @@ router.patch(
       .isLength({ max: 500 })
       .withMessage("Admin note cannot exceed 500 characters"),
   ],
-  //   validate,
   leaveController.updateLeaveStatus
 );
 
