@@ -200,13 +200,33 @@ exports.endBreak = catchAsync(async (req, res, next) => {
   });
 });
 
-//  Get today's attendance record
+//  Get today's attendance record all employee
 exports.getTodayAttendance = catchAsync(async (req, res) => {
-  const employeeId = req.user.id;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const attendance = await Attendance.find({
+    date: {
+      $gte: today,
+      $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+    },
+  }).populate("employee", "name email");
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      attendance: attendance || null,
+    },
+  });
+});
+
+//  Get today attandance of one employee
+exports.getTodayAttendanceAemployee = catchAsync(async (req, res) => {
+  const employeeId = req.user.id;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const attendance = await Attendance.findOne({
     employee: employeeId,
     date: {
       $gte: today,
@@ -221,6 +241,7 @@ exports.getTodayAttendance = catchAsync(async (req, res) => {
     },
   });
 });
+
 
 // Get own attendance history
 exports.getAttendanceHistory = catchAsync(async (req, res) => {
