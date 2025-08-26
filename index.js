@@ -11,6 +11,7 @@ const authRoute = require("./routes/auth");
 const attendanceRoute = require("./routes/attendance");
 const LeaveRoute = require("./routes/leaves");
 const EmployeesRoute = require("./routes/employees");
+const NotificationRoute = require("./routes/notification");
 
 const app = express();
 const server = http.createServer(app);
@@ -38,6 +39,7 @@ app.use("/api", authRoute);
 app.use("/api", attendanceRoute);
 app.use("/api", LeaveRoute);
 app.use("/api", EmployeesRoute);
+app.use("/api", NotificationRoute);
 
 // Initialize Socket.IO and attach to app
 const io = initSocket(server);
