@@ -2,6 +2,7 @@ const express = require("express");
 const { body } = require("express-validator");
 const authController = require("../controllers/auth");
 const auth = require("../middleware/auth");
+const { authLimiter } = require("../middleware/rateLimit");
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ router.post(
 
 // Authenticate user & get token
 router.post(
-  "/login",
+  "/login",authLimiter,
 
   authController.login
 );

@@ -3,6 +3,7 @@ require("dotenv").config({ path: ".env" });
 const cors = require("cors");
 const helmet = require("helmet");
 const connectDB = require("./config/DbConnection");
+const globalErrorHandler = require('./controllers/errorController');
 
 // Routes
 const authRoute = require("./routes/auth");
@@ -35,6 +36,8 @@ app.use("/api", authRoute);
 app.use("/api", attendanceRoute);
 app.use("/api", LeaveRoute);
 app.use("/api", EmployeesRoute);
+
+app.use(globalErrorHandler);
 
 
 // Start server
