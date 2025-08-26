@@ -206,7 +206,7 @@ exports.getTodayAttendance = catchAsync(async (req, res) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const attendance = await Attendance.findOne({
+  const attendance = await Attendance.find({
     employee: employeeId,
     date: {
       $gte: today,
