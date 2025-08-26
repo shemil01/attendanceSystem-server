@@ -4,7 +4,6 @@ const crypto = require('crypto');
 const signToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, {
     expiresIn: "1d"
-    // expiresIn: process.env.JWT_EXPIRES_IN
   });
 };
 

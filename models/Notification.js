@@ -20,7 +20,7 @@ const notificationSchema = new mongoose.Schema({
     default: 'SYSTEM'
   },
   relatedId: {
-    type: mongoose.Schema.Types.ObjectId, // For linking to leave request, etc.
+    type: mongoose.Schema.Types.ObjectId, 
     required: false
   },
   isRead: {
@@ -35,7 +35,6 @@ const notificationSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for efficient querying
 notificationSchema.index({ user: 1, isRead: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Notification', notificationSchema);

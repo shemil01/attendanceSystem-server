@@ -19,15 +19,15 @@ const attendanceSchema = new mongoose.Schema({
   breaks: [{
     start: Date,
     end: Date,
-    duration: Number, // in minutes
+    duration: Number, 
   }],
   totalBreakTime: {
     type: Number,
-    default: 0, // in minutes
+    default: 0, 
   },
   workingTime: {
     type: Number,
-    default: 0, // in minutes
+    default: 0, 
   },
   status: {
     type: String,
