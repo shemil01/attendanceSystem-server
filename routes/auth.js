@@ -1,11 +1,9 @@
 const express = require("express");
-const { body } = require("express-validator");
 const authController = require("../controllers/auth");
 const auth = require("../middleware/auth");
 const { authLimiter } = require("../middleware/rateLimit");
 
 const router = express.Router();
-
 
 // regstration
 router.post(
@@ -16,7 +14,8 @@ router.post(
 
 // Authenticate user & get token
 router.post(
-  "/login",authLimiter,
+  "/login",
+  authLimiter,
 
   authController.login
 );
@@ -25,19 +24,6 @@ router.post(
 
 router.get("/me", auth, authController.getMe);
 
-// Update user password
-router.patch(
-  "/update-password",
-  auth,
-  [
-    body("currentPassword")
-      .notEmpty()
-      .withMessage("Current password is required"),
-    body("newPassword")
-      .isLength({ min: 6 })
-      .withMessage("New password must be at least 6 characters long"),
-  ],
-  authController.updatePassword
-);
+
 
 module.exports = router;

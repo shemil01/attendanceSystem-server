@@ -192,10 +192,20 @@ exports.endBreak = catchAsync(async (req, res, next) => {
   await attendance.save();
   await attendance.populate("employee", "name email");
 
+  const formatMinutes = (mins) => {
+    const hours = Math.floor(mins / 60);
+    const minutes = mins % 60;
+    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+  };
+
   res.status(200).json({
     status: "success",
     data: {
-      attendance,
+      attendance: {
+        ...attendance.toObject(),
+        totalBreakTimeFormatted: formatMinutes(attendance.totalBreakTime),
+        lastBreakDurationFormatted: formatMinutes(durationMinutes),
+      },
     },
   });
 });
@@ -234,6 +244,13 @@ exports.getTodayAttendanceAemployee = catchAsync(async (req, res) => {
     },
   }).populate("employee", "name email");
 
+   if (!attendance || !attendance.checkIn) {
+    return res.status(200).json({
+      status: "reminder",
+      message: "⚠️ You have not checked in today. Please check in.",
+      attendance: null,
+    });
+  }
   res.status(200).json({
     status: "success",
     data: {
@@ -339,3 +356,5 @@ exports.getEmployeeAttendance = catchAsync(async (req, res) => {
     },
   });
 });
+
+
