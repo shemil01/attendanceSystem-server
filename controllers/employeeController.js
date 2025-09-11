@@ -115,13 +115,17 @@ exports.getEmployee = catchAsync(async (req, res, next) => {
     (record) => record.status === "PRESENT" || (record.checkIn && record.checkOut)
   ).length;
 
+const joinDate = new Date(employee.createdAt);
+const todayMidnight = new Date();
+todayMidnight.setHours(0, 0, 0, 0);
+
+const diffTime = todayMidnight.getTime() - joinDate.getTime();
+const totalDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
   const stats = {
-    totalDays: history.length,
+    totalDays,
     presentDays,
-    attendanceRate:
-      history.length > 0
-        ? Math.round((presentDays / history.length) * 100)
-        : 0,
+     attendanceRate: totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0,
   };
 
   res.status(200).json({
