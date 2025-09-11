@@ -179,9 +179,10 @@ exports.endBreak = catchAsync(async (req, res, next) => {
   activeBreak.end = new Date();
   const breakStartTime = new Date(activeBreak.start).getTime();
   const breakEndTime = new Date(activeBreak.end).getTime();
-  activeBreak.duration = Math.round(
+  const durationMinutes = Math.round(
     (breakEndTime - breakStartTime) / (1000 * 60)
   );
+  activeBreak.duration = durationMinutes;
 
   // Update total break time
   attendance.totalBreakTime = attendance.breaks.reduce(
@@ -244,7 +245,7 @@ exports.getTodayAttendanceAemployee = catchAsync(async (req, res) => {
     },
   }).populate("employee", "name email");
 
-   if (!attendance || !attendance.checkIn) {
+  if (!attendance || !attendance.checkIn) {
     return res.status(200).json({
       status: "reminder",
       message: "⚠️ You have not checked in today. Please check in.",
@@ -258,7 +259,6 @@ exports.getTodayAttendanceAemployee = catchAsync(async (req, res) => {
     },
   });
 });
-
 
 // Get own attendance history
 exports.getAttendanceHistory = catchAsync(async (req, res) => {
@@ -306,7 +306,7 @@ exports.getAllEmployeesAttendance = catchAsync(async (req, res) => {
   const attendance = await Attendance.find()
     .populate("employee", "name email role")
     .sort({ checkIn: 1 })
-    .limit(parseInt(limit));;
+    .limit(parseInt(limit));
 
   const total = await Attendance.countDocuments();
 
@@ -356,5 +356,3 @@ exports.getEmployeeAttendance = catchAsync(async (req, res) => {
     },
   });
 });
-
-

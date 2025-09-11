@@ -3,7 +3,6 @@ const { body, query } = require("express-validator");
 const attendanceController = require("../controllers/attendanceController");
 const auth = require("../middleware/auth");
 const restrictTo = require("../middleware/roles");
-const Attendance = require("../models/Attendance");
 
 const router = express.Router();
 
@@ -181,6 +180,5 @@ router.get(
 
 // attandance reminder
 // router.get("/missed-checkins",attendanceController.getMissedCheckIns );
-
 
 module.exports = router;
