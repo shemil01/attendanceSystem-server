@@ -40,11 +40,6 @@ exports.register = catchAsync(async (req, res, next) => {
 // Login user
 
 exports.login = catchAsync(async (req, res, next) => {
-  // Validate request body
-  // const { error } = validateLogin(req.body);
-  // if (error) {
-  //   return next(new AppError(error.details[0].message, 400));
-  // }
 
   const { email, password } = req.body;
 
