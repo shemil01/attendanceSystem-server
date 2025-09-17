@@ -40,7 +40,6 @@ exports.register = catchAsync(async (req, res, next) => {
 // Login user
 
 exports.login = catchAsync(async (req, res, next) => {
-
   const { email, password } = req.body;
 
   // Check if user exists and password is correct

@@ -83,8 +83,8 @@ router.get(
   restrictTo("EMPLOYEE", "ADMIN"),
   attendanceController.getTodayAttendance
 );
-// toaday attandance record of single employee
 
+// toaday attandance record of single employee
 router.get(
   "/attendance-one/today",
   restrictTo("EMPLOYEE", "ADMIN"),

@@ -102,13 +102,10 @@ exports.getEmployee = catchAsync(async (req, res, next) => {
   });
 
   // Fetch last 7 days history
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - 7);
+const history = await Attendance.find({
+  employee: employee._id,
+}).sort({ date: -1 });
 
-  const history = await Attendance.find({
-    employee: employee._id,
-    date: { $gte: startDate, $lt: tomorrow },
-  }).sort({ date: -1 });
 
   // Calculate stats
   const presentDays = history.filter(
