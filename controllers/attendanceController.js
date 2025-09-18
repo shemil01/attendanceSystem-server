@@ -291,6 +291,7 @@ exports.getAllEmployeesAttendance = catchAsync(async (req, res) => {
   const attendance = await Attendance.find()
     .populate("employee", "name email role")
     .sort({ checkIn: 1 })
+    .skip((page - 1) * limit) 
     .limit(parseInt(limit));
 
   const total = await Attendance.countDocuments();
