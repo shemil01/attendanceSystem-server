@@ -77,9 +77,7 @@ exports.getMyLeaves = catchAsync(async (req, res, next) => {
   const leaves = await Leave.find(filter)
     .populate("employee", "name email")
     .populate("approvedBy", "name")
-    .sort({ createdAt: -1 })
-    .limit(limit * 1)
-    .skip((page - 1) * limit);
+    .sort({ createdAt: -1 });
 
   // Get total count for pagination
   const total = await Leave.countDocuments(filter);

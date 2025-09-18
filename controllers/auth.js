@@ -4,39 +4,6 @@ const { signToken } = require("../utils/auth");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 
-// register
-exports.register = catchAsync(async (req, res, next) => {
-  const { name, email, password, role } = req.body;
-
-  // check if email already exists
-  const existing = await User.findOne({ email });
-  if (existing) {
-    return next(new AppError("Email already registered", 400));
-  }
-
-  // create user (password is hashed in pre-save hook)
-  const newUser = await User.create({
-    name,
-    email,
-    password,
-    role,
-  });
-
-  // don’t return password
-  newUser.password = undefined;
-
-  // create token
-  const token = signToken(newUser._id, newUser.role);
-
-  res.status(201).json({
-    status: "success",
-    token,
-    data: {
-      user: newUser,
-    },
-  });
-});
-
 // Login user
 
 exports.login = catchAsync(async (req, res, next) => {

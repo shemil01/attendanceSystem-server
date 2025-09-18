@@ -1,9 +1,9 @@
-const User = require('../models/User');
-const Attendance = require('../models/Attendance');
-const Leave = require('../models/Leave');
-const AppError = require('../utils/appError');
-const catchAsync = require('../utils/catchAsync');
-const { validateEmployeeCreate } = require('../validators/employeeValidator');
+const User = require("../models/User");
+const Attendance = require("../models/Attendance");
+const Leave = require("../models/Leave");
+const AppError = require("../utils/appError");
+const catchAsync = require("../utils/catchAsync");
+const { validateEmployeeCreate } = require("../validators/employeeValidator");
 
 // get all employes
 exports.getAllEmployees = catchAsync(async (req, res) => {
@@ -14,13 +14,13 @@ exports.getAllEmployees = catchAsync(async (req, res) => {
   if (role) {
     filter.role = role;
   }
-  if (isActive !== undefined ) {
-    filter.isActive = isActive === 'true';
+  if (isActive !== undefined) {
+    filter.isActive = isActive === "true";
   }
 
   // Execute query with pagination
   const employees = await User.find(filter)
-    .select('-password')
+    .select("-password")
     .sort({ createdAt: -1 })
     .limit(limit * 1)
     .skip((page - 1) * limit);
@@ -29,19 +29,18 @@ exports.getAllEmployees = catchAsync(async (req, res) => {
   const total = await User.countDocuments(filter);
 
   res.status(200).json({
-    status: 'success',
+    status: "success",
     results: employees.length,
     data: {
-      employees
+      employees,
     },
     pagination: {
       current: parseInt(page),
       pages: Math.ceil(total / limit),
-      total
-    }
+      total,
+    },
   });
 });
-
 
 //  create a employee
 exports.createEmployee = catchAsync(async (req, res, next) => {
@@ -51,36 +50,35 @@ exports.createEmployee = catchAsync(async (req, res, next) => {
     return next(new AppError(error.details[0].message, 400));
   }
 
-  const { name, email, password, role ,department,position} = req.body;
+  const { name, email, password, role, department, position } = req.body;
 
   // Check if user already exists
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    return next(new AppError('User with this email already exists', 400));
+    return next(new AppError("User with this email already exists", 400));
   }
 
   const employee = await User.create({
     name,
     email,
     password,
-    role: role || 'EMPLOYEE',
+    role: role || "EMPLOYEE",
     department,
-    position
+    position,
   });
 
   // Remove password from output
   employee.password = undefined;
 
   res.status(201).json({
-    status: 'success',
+    status: "success",
     data: {
-      employee
-    }
+      employee,
+    },
   });
 });
 
 // Get employee by ID
-
 exports.getEmployee = catchAsync(async (req, res, next) => {
   const employee = await User.findById(req.params.id).select("-password");
 
@@ -101,28 +99,29 @@ exports.getEmployee = catchAsync(async (req, res, next) => {
     date: { $gte: today, $lt: tomorrow },
   });
 
-  // Fetch last 7 days history
-const history = await Attendance.find({
-  employee: employee._id,
-}).sort({ date: -1 });
-
+  // Fetch history
+  const history = await Attendance.find({
+    employee: employee._id,
+  }).sort({ date: -1 });
 
   // Calculate stats
   const presentDays = history.filter(
-    (record) => record.status === "PRESENT" || (record.checkIn && record.checkOut)
+    (record) =>
+      record.status === "PRESENT" || (record.checkIn && record.checkOut)
   ).length;
 
-const joinDate = new Date(employee.createdAt);
-const todayMidnight = new Date();
-todayMidnight.setHours(0, 0, 0, 0);
+  const joinDate = new Date(employee.createdAt);
+  const todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
 
-const diffTime = todayMidnight.getTime() - joinDate.getTime();
-const totalDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  const diffTime = todayMidnight.getTime() - joinDate.getTime();
+  const totalDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
   const stats = {
     totalDays,
     presentDays,
-     attendanceRate: totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0,
+    attendanceRate:
+      totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0,
   };
 
   res.status(200).json({
@@ -136,7 +135,6 @@ const totalDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
   });
 });
 
-
 // Update employee
 exports.updateEmployee = catchAsync(async (req, res, next) => {
   // Remove password from update fields if present
@@ -144,42 +142,38 @@ exports.updateEmployee = catchAsync(async (req, res, next) => {
     delete req.body.password;
   }
 
-  const employee = await User.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    {
-      new: true,
-      runValidators: true
-    }
-  ).select('-password');
+  const employee = await User.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  }).select("-password");
 
   if (!employee) {
-    return next(new AppError('No employee found with that ID', 404));
+    return next(new AppError("No employee found with that ID", 404));
   }
 
   res.status(200).json({
-    status: 'success',
+    status: "success",
     data: {
-      employee
-    }
+      employee,
+    },
   });
 });
 
-//  Delete employee 
+//  Delete employee
 exports.deleteEmployee = catchAsync(async (req, res, next) => {
   const employee = await User.findByIdAndDelete(
     req.params.id,
     { isActive: false },
     { new: true }
-  ).select('-password');
+  ).select("-password");
 
   if (!employee) {
-    return next(new AppError('No employee found with that ID', 404));
+    return next(new AppError("No employee found with that ID", 404));
   }
 
   res.status(204).json({
-    status: 'success',
-    data: null
+    status: "success",
+    data: null,
   });
 });
 
@@ -193,7 +187,7 @@ exports.getEmployeeStats = catchAsync(async (req, res, next) => {
   // Check if employee exists
   const employee = await User.findById(employeeId);
   if (!employee) {
-    return next(new AppError('No employee found with that ID', 404));
+    return next(new AppError("No employee found with that ID", 404));
   }
 
   // Get attendance stats for current month
@@ -204,21 +198,21 @@ exports.getEmployeeStats = catchAsync(async (req, res, next) => {
     {
       $match: {
         employee: mongoose.Types.ObjectId(employeeId),
-        date: { $gte: firstDayOfMonth, $lte: lastDayOfMonth }
-      }
+        date: { $gte: firstDayOfMonth, $lte: lastDayOfMonth },
+      },
     },
     {
       $group: {
         _id: null,
         totalPresent: {
-          $sum: { $cond: [{ $eq: ['$status', 'PRESENT'] }, 1, 0] }
+          $sum: { $cond: [{ $eq: ["$status", "PRESENT"] }, 1, 0] },
         },
         totalAbsent: {
-          $sum: { $cond: [{ $eq: ['$status', 'ABSENT'] }, 1, 0] }
+          $sum: { $cond: [{ $eq: ["$status", "ABSENT"] }, 1, 0] },
         },
-        avgWorkingHours: { $avg: '$workingTime' }
-      }
-    }
+        avgWorkingHours: { $avg: "$workingTime" },
+      },
+    },
   ]);
 
   // Get leave stats for current year
@@ -228,10 +222,10 @@ exports.getEmployeeStats = catchAsync(async (req, res, next) => {
         employee: mongoose.Types.ObjectId(employeeId),
         startDate: {
           $gte: new Date(`${currentYear}-01-01`),
-          $lte: new Date(`${currentYear}-12-31`)
+          $lte: new Date(`${currentYear}-12-31`),
         },
-        status: 'APPROVED'
-      }
+        status: "APPROVED",
+      },
     },
     {
       $group: {
@@ -241,25 +235,29 @@ exports.getEmployeeStats = catchAsync(async (req, res, next) => {
           $sum: {
             $ceil: {
               $divide: [
-                { $subtract: ['$endDate', '$startDate'] },
-                1000 * 60 * 60 * 24
-              ]
-            }
-          }
-        }
-      }
-    }
+                { $subtract: ["$endDate", "$startDate"] },
+                1000 * 60 * 60 * 24,
+              ],
+            },
+          },
+        },
+      },
+    },
   ]);
 
   const stats = {
-    attendance: attendanceStats[0] || { totalPresent: 0, totalAbsent: 0, avgWorkingHours: 0 },
-    leaves: leaveStats[0] || { totalLeaves: 0, totalLeaveDays: 0 }
+    attendance: attendanceStats[0] || {
+      totalPresent: 0,
+      totalAbsent: 0,
+      avgWorkingHours: 0,
+    },
+    leaves: leaveStats[0] || { totalLeaves: 0, totalLeaveDays: 0 },
   };
 
   res.status(200).json({
-    status: 'success',
+    status: "success",
     data: {
-      stats
-    }
+      stats,
+    },
   });
 });

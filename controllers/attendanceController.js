@@ -1,29 +1,20 @@
 const Attendance = require("../models/Attendance");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
-const {
-  validateCheckIn,
-  validateBreak,
-} = require("../validators/attendanceValidator");
+const { getTodayRange } = require("../utils/dateHelper");
+const { validateBreak } = require("../validators/attendanceValidator");
 
 // chekin controller
 exports.checkIn = catchAsync(async (req, res, next) => {
-  // Validate request body
-  const { error } = validateCheckIn(req.body);
-  if (error) {
-    return next(new AppError(error.details[0].message, 400));
-  }
-
   const employeeId = req.user.id;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const { today, tomorrow } = getTodayRange();
 
   // Check if already checked in today
   const existingAttendance = await Attendance.findOne({
     employee: employeeId,
     date: {
       $gte: today,
-      $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+      $lt: tomorrow,
     },
   });
 
@@ -52,15 +43,14 @@ exports.checkIn = catchAsync(async (req, res, next) => {
 //  Check out from work
 exports.checkOut = catchAsync(async (req, res, next) => {
   const employeeId = req.user.id;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const { today, tomorrow } = getTodayRange();
 
   // Find today's attendance record
   const attendance = await Attendance.findOne({
     employee: employeeId,
     date: {
       $gte: today,
-      $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+      $lt: tomorrow,
     },
   });
 
@@ -100,6 +90,7 @@ exports.checkOut = catchAsync(async (req, res, next) => {
 
 //  Start a break
 exports.startBreak = catchAsync(async (req, res, next) => {
+  const { today, tomorrow } = getTodayRange();
   // Validate request body
   const { error } = validateBreak(req.body);
   if (error) {
@@ -107,15 +98,13 @@ exports.startBreak = catchAsync(async (req, res, next) => {
   }
 
   const employeeId = req.user.id;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
 
   // Find today's attendance record
   const attendance = await Attendance.findOne({
     employee: employeeId,
     date: {
       $gte: today,
-      $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+      $lt: tomorrow,
     },
   });
 
@@ -153,15 +142,14 @@ exports.startBreak = catchAsync(async (req, res, next) => {
 // End a break
 exports.endBreak = catchAsync(async (req, res, next) => {
   const employeeId = req.user.id;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const { today, tomorrow } = getTodayRange();
 
   // Find today's attendance record
   const attendance = await Attendance.findOne({
     employee: employeeId,
     date: {
       $gte: today,
-      $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+      $lt: tomorrow,
     },
   });
 
@@ -213,13 +201,11 @@ exports.endBreak = catchAsync(async (req, res, next) => {
 
 //  Get today's attendance record all employee
 exports.getTodayAttendance = catchAsync(async (req, res) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
+  const { today, tomorrow } = getTodayRange();
   const attendance = await Attendance.find({
     date: {
       $gte: today,
-      $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+      $lt: tomorrow,
     },
   }).populate("employee", "name email");
 
@@ -234,14 +220,13 @@ exports.getTodayAttendance = catchAsync(async (req, res) => {
 //  Get today attandance of one employee
 exports.getTodayAttendanceAemployee = catchAsync(async (req, res) => {
   const employeeId = req.user.id;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const { today, tomorrow } = getTodayRange();
 
   const attendance = await Attendance.findOne({
     employee: employeeId,
     date: {
       $gte: today,
-      $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+      $lt: tomorrow,
     },
   }).populate("employee", "name email");
 
